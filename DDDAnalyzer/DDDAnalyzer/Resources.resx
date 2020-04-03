@@ -117,15 +117,24 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ValueObjectAnalyzerDescription" xml:space="preserve">
+  <data name="ValueObjectMustBeImmutableDescription" xml:space="preserve">
+    <value>Value objects must be immutable</value>
+  </data>
+  <data name="ValueObjectMustBeImmutableMessageFormat" xml:space="preserve">
+    <value>ValueObjects must be immutable</value>
+  </data>
+  <data name="ValueObjectMustBeImmutableTitle" xml:space="preserve">
+    <value>ValueObjects must be immutable</value>
+  </data>
+  <data name="ValueObjectUsesEntityDescription" xml:space="preserve">
     <value>Value objects should not reference entities</value>
     <comment>An optional longer localizable description of the diagnostic.</comment>
   </data>
-  <data name="ValueObjectAnalyzerMessageFormat" xml:space="preserve">
+  <data name="ValueObjectUsesEntityMessageFormat" xml:space="preserve">
     <value>ValueObjects must not use entities</value>
     <comment>The format-able message the diagnostic displays.</comment>
   </data>
-  <data name="ValueObjectAnalyzerTitle" xml:space="preserve">
+  <data name="ValueObjectUsesEntityTitle" xml:space="preserve">
     <value>ValueObject uses entities</value>
     <comment>The title of the diagnostic.</comment>
   </data>

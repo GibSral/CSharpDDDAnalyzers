@@ -10,21 +10,39 @@ namespace DDDAnalyzer
     public class ValueObjectAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "DDDAnalyzer";
-
-        private static readonly LocalizableString Title = new LocalizableResourceString(nameof(Resources.ValueObjectAnalyzerTitle), Resources.ResourceManager, typeof(Resources));
-        private static readonly LocalizableString MessageFormat = new LocalizableResourceString(nameof(Resources.ValueObjectAnalyzerMessageFormat), Resources.ResourceManager, typeof(Resources));
-        private static readonly LocalizableString Description = new LocalizableResourceString(nameof(Resources.ValueObjectAnalyzerDescription), Resources.ResourceManager, typeof(Resources));
         private const string Category = "Design";
 
-        private static readonly DiagnosticDescriptor ValueObjectMustNotUseEntityRule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error, isEnabledByDefault: true, description: Description);
+        private static readonly DiagnosticDescriptor ValueObjectMustNotUseEntityRule = new DiagnosticDescriptor(DiagnosticId,
+            new LocalizableResourceString(nameof(Resources.ValueObjectUsesEntityTitle), Resources.ResourceManager, typeof(Resources)),
+            new LocalizableResourceString(nameof(Resources.ValueObjectUsesEntityMessageFormat), Resources.ResourceManager, typeof(Resources)),
+            Category,
+            DiagnosticSeverity.Error,
+            true,
+            new LocalizableResourceString(nameof(Resources.ValueObjectUsesEntityDescription), Resources.ResourceManager, typeof(Resources)));
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(ValueObjectMustNotUseEntityRule); } }
+        private static readonly DiagnosticDescriptor ValueObjectMustBeImmutable = new DiagnosticDescriptor(DiagnosticId,
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeImmutableTitle), Resources.ResourceManager, typeof(Resources)),
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeImmutableMessageFormat), Resources.ResourceManager, typeof(Resources)),
+            Category,
+            DiagnosticSeverity.Error,
+            true,
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeImmutableDescription), Resources.ResourceManager, typeof(Resources)));
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(ValueObjectMustNotUseEntityRule, ValueObjectMustBeImmutable);
 
         public override void Initialize(AnalysisContext context)
         {
-            //context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
             context.RegisterSymbolAction(AnalyzeMethod, SymbolKind.Method);
             context.RegisterSymbolAction(AnalyzeProperty, SymbolKind.Property);
+            context.RegisterSymbolAction(AnalyzeField, SymbolKind.Field);
+        }
+
+        private void AnalyzeField(SymbolAnalysisContext context)
+        {
+            var fieldSymbol = (IFieldSymbol)context.Symbol;
+            if (!fieldSymbol.IsReadOnly)
+            {
+                EmitImmutabilityViolation(context, fieldSymbol);
+            }
         }
 
         private static void AnalyzeMethod(SymbolAnalysisContext context)
@@ -35,6 +53,15 @@ namespace DDDAnalyzer
             {
                 CheckThatParametersAreNotEntities(context, method);
                 CheckThatReturnTypeIsNotEntity(context, method);
+                CheckThatMethodIsNotVoid(context, method);
+            }
+        }
+
+        private static void CheckThatMethodIsNotVoid(SymbolAnalysisContext context, IMethodSymbol method)
+        {
+            if (method.ReturnsVoid)
+            {
+                EmitImmutabilityViolation(context, method);
             }
         }
 
@@ -61,18 +88,17 @@ namespace DDDAnalyzer
             }
         }
 
-        private static void EmitEntityViolation(SymbolAnalysisContext context, ISymbol symbol)
-        {
-            var diagnostic = Diagnostic.Create(ValueObjectMustNotUseEntityRule, symbol.Locations[0]);
-            context.ReportDiagnostic(diagnostic);
-        }
-
         private static void AnalyzeProperty(SymbolAnalysisContext context)
         {
             var propertySymbol = (IPropertySymbol)context.Symbol;
             var classType = propertySymbol.ContainingType;
             if (IsValueObject(classType))
             {
+                if (!propertySymbol.IsWriteOnly)
+                {
+                    EmitImmutabilityViolation(context, propertySymbol);
+                }
+
                 if (IsEntity(propertySymbol.Type))
                 {
                     EmitEntityViolation(context, propertySymbol);
@@ -96,6 +122,18 @@ namespace DDDAnalyzer
         {
             var isValueObject = attribute.AttributeClass.Name.Equals(nameof(ValueObjectAttribute));
             return isValueObject;
+        }
+
+        private static void EmitImmutabilityViolation(SymbolAnalysisContext context, ISymbol symbol)
+        {
+            var diagnostic = Diagnostic.Create(ValueObjectMustBeImmutable, symbol.Locations[0]);
+            context.ReportDiagnostic(diagnostic);
+        }
+
+        private static void EmitEntityViolation(SymbolAnalysisContext context, ISymbol symbol)
+        {
+            var diagnostic = Diagnostic.Create(ValueObjectMustNotUseEntityRule, symbol.Locations[0]);
+            context.ReportDiagnostic(diagnostic);
         }
     }
 }

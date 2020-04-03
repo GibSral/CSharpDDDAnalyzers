@@ -62,29 +62,56 @@ namespace DDDAnalyzer {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Value objects must be immutable.
+        /// </summary>
+        internal static string ValueObjectMustBeImmutableDescription {
+            get {
+                return ResourceManager.GetString("ValueObjectMustBeImmutableDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ValueObjects must be immutable.
+        /// </summary>
+        internal static string ValueObjectMustBeImmutableMessageFormat {
+            get {
+                return ResourceManager.GetString("ValueObjectMustBeImmutableMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ValueObjects must be immutable.
+        /// </summary>
+        internal static string ValueObjectMustBeImmutableTitle {
+            get {
+                return ResourceManager.GetString("ValueObjectMustBeImmutableTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Value objects should not reference entities.
         /// </summary>
-        internal static string ValueObjectAnalyzerDescription {
+        internal static string ValueObjectUsesEntityDescription {
             get {
-                return ResourceManager.GetString("ValueObjectAnalyzerDescription", resourceCulture);
+                return ResourceManager.GetString("ValueObjectUsesEntityDescription", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to ValueObjects must not use entities.
         /// </summary>
-        internal static string ValueObjectAnalyzerMessageFormat {
+        internal static string ValueObjectUsesEntityMessageFormat {
             get {
-                return ResourceManager.GetString("ValueObjectAnalyzerMessageFormat", resourceCulture);
+                return ResourceManager.GetString("ValueObjectUsesEntityMessageFormat", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to ValueObject uses entities.
         /// </summary>
-        internal static string ValueObjectAnalyzerTitle {
+        internal static string ValueObjectUsesEntityTitle {
             get {
-                return ResourceManager.GetString("ValueObjectAnalyzerTitle", resourceCulture);
+                return ResourceManager.GetString("ValueObjectUsesEntityTitle", resourceCulture);
             }
         }
     }
