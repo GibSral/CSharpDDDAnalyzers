@@ -23,27 +23,71 @@ namespace DDDAnalyzer
         private static readonly LocalizableString Description = new LocalizableResourceString(nameof(Resources.ValueObjectAnalyzerDescription), Resources.ResourceManager, typeof(Resources));
         private const string Category = "Design";
 
-        private static DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
+        private static DiagnosticDescriptor ValueObjectMustNotUseEntityRule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error, isEnabledByDefault: true, description: Description);
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(ValueObjectMustNotUseEntityRule); } }
 
-        public override void Initialize(AnalysisContext context) => context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
-
-        private static void AnalyzeSymbol(SymbolAnalysisContext context)
+        public override void Initialize(AnalysisContext context)
         {
-            // TODO: Replace the following code with your own analysis, generating Diagnostic objects for any issues you find
-            var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
-            var attributes = namedTypeSymbol.GetAttributes();
-            var firstOrDefault = attributes.Any(it => IsValueObject(it));
+            //context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
+            context.RegisterSymbolAction(AnalyzeMethod, SymbolKind.Method);
+            context.RegisterSymbolAction(AnalyzeProperty, SymbolKind.Property);
+        }
 
-            // Find just those named type symbols with names containing lowercase letters.
-            if (namedTypeSymbol.Name.ToCharArray().Any(char.IsLower))
+        private void AnalyzeMethod(SymbolAnalysisContext context)
+        {
+            var method = (IMethodSymbol)context.Symbol;
+            var type = method.ContainingType;
+            if (IsValueObject(type))
             {
-                // For all such symbols, produce a diagnostic.
-                var diagnostic = Diagnostic.Create(Rule, namedTypeSymbol.Locations[0], namedTypeSymbol.Name);
-
-                context.ReportDiagnostic(diagnostic);
+                CheckThatParametersAreNotEntities(context, method);
+                CheckThatReturnTypeIsNotEntity(context, method);
             }
+        }
+
+        private void CheckThatReturnTypeIsNotEntity(SymbolAnalysisContext context, IMethodSymbol method)
+        {
+            if (!method.ReturnsVoid)
+            {
+                if (IsEntity(method.ReturnType))
+                {
+                    EmitEntityViolation(context, method.ReturnType);
+                }
+            }
+        }
+
+        private void CheckThatParametersAreNotEntities(SymbolAnalysisContext context, IMethodSymbol method)
+        {
+            foreach (var parameter in method.Parameters)
+            {
+                var parameterType = parameter.Type;
+                if (IsEntity(parameterType))
+                {
+                    EmitEntityViolation(context, parameter);
+                }
+            }
+        }
+
+        private static void EmitEntityViolation(SymbolAnalysisContext context, ISymbol parameter)
+        {
+            var diagnostic = Diagnostic.Create(ValueObjectMustNotUseEntityRule, parameter.Locations[0]);
+            context.ReportDiagnostic(diagnostic);
+        }
+
+        private void AnalyzeProperty(SymbolAnalysisContext context)
+        {
+        }
+
+        private bool IsEntity(ITypeSymbol parameterType)
+        {
+            var attributes = parameterType.GetAttributes().ToArray();
+            return attributes.Any(it => it.AttributeClass.Name.Equals(nameof(EntityAttribute)));
+        }
+
+        private bool IsValueObject(INamedTypeSymbol type)
+        {
+            var attributes = type.GetAttributes();
+            return attributes.Any(IsValueObject);
         }
 
         private static bool IsValueObject(AttributeData attribute)

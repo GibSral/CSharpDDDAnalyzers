@@ -71,7 +71,7 @@ namespace DDDAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ValueObject &apos;{0}&apos; uses Entities.
+        ///   Looks up a localized string similar to ValueObjects must not use entities.
         /// </summary>
         internal static string ValueObjectAnalyzerMessageFormat {
             get {

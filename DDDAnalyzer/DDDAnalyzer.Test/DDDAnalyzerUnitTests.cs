@@ -69,6 +69,11 @@ namespace DDDAnalyzer.Test
             VerifyCSharpFix(test, fixtest);
         }
 
+        [Test]
+        public void UNIT_PRECONDITION_EXPECTATION()
+        {
+        }
+
         protected override CodeFixProvider GetCSharpCodeFixProvider()
         {
             return new DDDAnalyzerCodeFixProvider();
