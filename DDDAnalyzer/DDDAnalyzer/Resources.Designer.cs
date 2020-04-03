@@ -89,6 +89,60 @@ namespace DDDAnalyzer {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Value objects must be declared as sealed.
+        /// </summary>
+        internal static string ValueObjectMustBeSealedDescription {
+            get {
+                return ResourceManager.GetString("ValueObjectMustBeSealedDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value objects must be declared as sealed.
+        /// </summary>
+        internal static string ValueObjectMustBeSealedMessageFormat {
+            get {
+                return ResourceManager.GetString("ValueObjectMustBeSealedMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value objects must be declared as sealed.
+        /// </summary>
+        internal static string ValueObjectMustBeSealedTitle {
+            get {
+                return ResourceManager.GetString("ValueObjectMustBeSealedTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value objects must implement IEqautable&lt;ValueObject&gt;.
+        /// </summary>
+        internal static string ValueObjectMustImplementIEquatableDescription {
+            get {
+                return ResourceManager.GetString("ValueObjectMustImplementIEquatableDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value objects must implement IEqautable&lt;{0}&gt;.
+        /// </summary>
+        internal static string ValueObjectMustImplementIEquatableMessageFormat {
+            get {
+                return ResourceManager.GetString("ValueObjectMustImplementIEquatableMessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value objects must implement IEqautable&lt;ValueObject&gt;.
+        /// </summary>
+        internal static string ValueObjectMustImplementIEquatableTitle {
+            get {
+                return ResourceManager.GetString("ValueObjectMustImplementIEquatableTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Value objects should not reference entities.
         /// </summary>
         internal static string ValueObjectUsesEntityDescription {

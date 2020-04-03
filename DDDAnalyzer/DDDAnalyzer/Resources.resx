@@ -126,6 +126,24 @@
   <data name="ValueObjectMustBeImmutableTitle" xml:space="preserve">
     <value>ValueObjects must be immutable</value>
   </data>
+  <data name="ValueObjectMustBeSealedDescription" xml:space="preserve">
+    <value>Value objects must be declared as sealed</value>
+  </data>
+  <data name="ValueObjectMustBeSealedMessageFormat" xml:space="preserve">
+    <value>Value objects must be declared as sealed</value>
+  </data>
+  <data name="ValueObjectMustBeSealedTitle" xml:space="preserve">
+    <value>Value objects must be declared as sealed</value>
+  </data>
+  <data name="ValueObjectMustImplementIEquatableDescription" xml:space="preserve">
+    <value>Value objects must implement IEqautable&lt;ValueObject&gt;</value>
+  </data>
+  <data name="ValueObjectMustImplementIEquatableMessageFormat" xml:space="preserve">
+    <value>Value objects must implement IEqautable&lt;{0}&gt;</value>
+  </data>
+  <data name="ValueObjectMustImplementIEquatableTitle" xml:space="preserve">
+    <value>Value objects must implement IEqautable&lt;ValueObject&gt;</value>
+  </data>
   <data name="ValueObjectUsesEntityDescription" xml:space="preserve">
     <value>Value objects should not reference entities</value>
     <comment>An optional longer localizable description of the diagnostic.</comment>

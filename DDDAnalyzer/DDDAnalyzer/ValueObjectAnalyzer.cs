@@ -27,21 +27,67 @@ namespace DDDAnalyzer
             DiagnosticSeverity.Error,
             true,
             new LocalizableResourceString(nameof(Resources.ValueObjectMustBeImmutableDescription), Resources.ResourceManager, typeof(Resources)));
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(ValueObjectMustNotUseEntityRule, ValueObjectMustBeImmutable);
+
+        private static readonly DiagnosticDescriptor ValueObjectMustImplementIEquatable = new DiagnosticDescriptor(DiagnosticId,
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableTitle), Resources.ResourceManager, typeof(Resources)),
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableMessageFormat), Resources.ResourceManager, typeof(Resources)),
+            Category,
+            DiagnosticSeverity.Error,
+            true,
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableDescription), Resources.ResourceManager, typeof(Resources)));
+
+        private static readonly DiagnosticDescriptor ValueObjectMustBeSealed = new DiagnosticDescriptor(DiagnosticId,
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeSealedTitle), Resources.ResourceManager, typeof(Resources)),
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeSealedMessageFormat), Resources.ResourceManager, typeof(Resources)),
+            Category,
+            DiagnosticSeverity.Error,
+            true,
+            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeSealedDescription), Resources.ResourceManager, typeof(Resources)));
+
+
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
+            ImmutableArray.Create(ValueObjectMustNotUseEntityRule, ValueObjectMustBeImmutable, ValueObjectMustImplementIEquatable, ValueObjectMustBeSealed);
 
         public override void Initialize(AnalysisContext context)
         {
+            context.RegisterSymbolAction(AnalyzeType, SymbolKind.NamedType);
             context.RegisterSymbolAction(AnalyzeMethod, SymbolKind.Method);
             context.RegisterSymbolAction(AnalyzeProperty, SymbolKind.Property);
             context.RegisterSymbolAction(AnalyzeField, SymbolKind.Field);
         }
 
-        private void AnalyzeField(SymbolAnalysisContext context)
+        private static void AnalyzeType(SymbolAnalysisContext context)
+        {
+            var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
+            if (IsValueObject(namedTypeSymbol))
+            {
+                if (!namedTypeSymbol.IsSealed)
+                {
+                    EmitSealedViolation(context, namedTypeSymbol);
+                }
+
+                var implementsIEquatable = namedTypeSymbol.AllInterfaces.Any(it =>
+                {
+                    var implements = it.Name.Equals("IEquatable");
+                    implements &= it.TypeArguments.Any(tp => tp.Name.Equals(namedTypeSymbol.Name) && tp.ContainingNamespace.Equals(namedTypeSymbol.ContainingNamespace));
+                    return implements;
+                });
+                if (!implementsIEquatable)
+                {
+                    EmitIEquatableViolation(context, namedTypeSymbol);
+                }
+            }
+        }
+
+        private static void AnalyzeField(SymbolAnalysisContext context)
         {
             var fieldSymbol = (IFieldSymbol)context.Symbol;
-            if (!fieldSymbol.IsReadOnly)
+            if (IsValueObject(fieldSymbol.ContainingType))
             {
-                EmitImmutabilityViolation(context, fieldSymbol);
+                if (!fieldSymbol.IsReadOnly)
+                {
+                    EmitImmutabilityViolation(context, fieldSymbol);
+                }
             }
         }
 
@@ -53,6 +99,15 @@ namespace DDDAnalyzer
             {
                 CheckThatParametersAreNotEntities(context, method);
                 CheckThatReturnTypeIsNotEntity(context, method);
+                CheckForPrivateConstructor(method, context.);
+            }
+        }
+
+        private static void CheckForPrivateConstructor(IMethodSymbol method)
+        {
+            if (method.MethodKind == MethodKind.Constructor)
+            {
+                if(method.)
             }
         }
 
@@ -85,7 +140,7 @@ namespace DDDAnalyzer
             var classType = propertySymbol.ContainingType;
             if (IsValueObject(classType))
             {
-                if (!propertySymbol.IsWriteOnly)
+                if (!propertySymbol.IsReadOnly)
                 {
                     EmitImmutabilityViolation(context, propertySymbol);
                 }
@@ -115,15 +170,18 @@ namespace DDDAnalyzer
             return isValueObject;
         }
 
-        private static void EmitImmutabilityViolation(SymbolAnalysisContext context, ISymbol symbol)
-        {
-            var diagnostic = Diagnostic.Create(ValueObjectMustBeImmutable, symbol.Locations[0]);
-            context.ReportDiagnostic(diagnostic);
-        }
+        private static void EmitIEquatableViolation(SymbolAnalysisContext context, INamedTypeSymbol symbol) =>
+            EmitViolation(context, symbol, ValueObjectMustImplementIEquatable, symbol.Name);
 
-        private static void EmitEntityViolation(SymbolAnalysisContext context, ISymbol symbol)
+        private static void EmitSealedViolation(SymbolAnalysisContext context, INamedTypeSymbol symbol) => EmitViolation(context, symbol, ValueObjectMustBeSealed);
+
+        private static void EmitImmutabilityViolation(SymbolAnalysisContext context, ISymbol symbol) => EmitViolation(context, symbol, ValueObjectMustBeImmutable);
+
+        private static void EmitEntityViolation(SymbolAnalysisContext context, ISymbol symbol) => EmitViolation(context, symbol, ValueObjectMustNotUseEntityRule);
+
+        private static void EmitViolation(SymbolAnalysisContext context, ISymbol symbol, DiagnosticDescriptor valueObjectMustBeSealed, params object[] parameters)
         {
-            var diagnostic = Diagnostic.Create(ValueObjectMustNotUseEntityRule, symbol.Locations[0]);
+            var diagnostic = Diagnostic.Create(valueObjectMustBeSealed, symbol.Locations[0], parameters);
             context.ReportDiagnostic(diagnostic);
         }
     }
