@@ -38,32 +38,17 @@ namespace DDDAnalyzer
             context.RegisterCodeFix(
                 CodeAction.Create(
                     title: title,
-                    createChangedSolution: it => MakeUppercaseAsync(context.Document, declaration, it),
+                    it => MakeClassSealed(context.Document, declaration, it),
                     equivalenceKey: title),
                 diagnostic);
         }
 
-        //private Task<Solution> MakeClassSealed(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
-        //{
-        //}
-        
-        private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Document> MakeClassSealed(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
         {
-            // Compute new uppercase name.
-            var identifierToken = typeDecl.Identifier;
-            var newName = identifierToken.Text.ToUpperInvariant();
-
-            // Get the symbol representing the type to be renamed.
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
-
-            // Produce a new solution that has all references to that type renamed, including the declaration.
-            var originalSolution = document.Project.Solution;
-            var optionSet = originalSolution.Workspace.Options;
-            var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
-
-            // Return the new solution with the now-uppercase type name.
-            return newSolution;
+            var newModifiers = typeDecl.AddModifiers(SyntaxFactory.Token(SyntaxKind.SealedKeyword));
+            var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken);
+            var syntaxRootWithReplacedModifiers = syntaxRoot.ReplaceNode(typeDecl, newModifiers);
+            return document.WithSyntaxRoot(syntaxRootWithReplacedModifiers);
         }
     }
 }
