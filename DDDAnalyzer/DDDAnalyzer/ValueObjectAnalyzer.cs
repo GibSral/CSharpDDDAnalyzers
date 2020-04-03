@@ -9,10 +9,13 @@ namespace DDDAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class ValueObjectAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "DDDAnalyzer";
+        public const string NoEntitiesInValueObjectsId = nameof(NoEntitiesInValueObjectsId);
+        public const string ValueObjectsMustBeImmutableId = nameof(ValueObjectsMustBeImmutableId);
+        public const string ValueObjectsMustImplementIEquatableId = nameof(ValueObjectsMustImplementIEquatableId);
+        public const string ValueObjectsMustBeSealedId = nameof(ValueObjectsMustBeSealedId);
         private const string Category = "Design";
 
-        private static readonly DiagnosticDescriptor ValueObjectMustNotUseEntityRule = new DiagnosticDescriptor(DiagnosticId,
+        private static readonly DiagnosticDescriptor ValueObjectMustNotUseEntityRule = new DiagnosticDescriptor(NoEntitiesInValueObjectsId,
             new LocalizableResourceString(nameof(Resources.ValueObjectUsesEntityTitle), Resources.ResourceManager, typeof(Resources)),
             new LocalizableResourceString(nameof(Resources.ValueObjectUsesEntityMessageFormat), Resources.ResourceManager, typeof(Resources)),
             Category,
@@ -20,7 +23,7 @@ namespace DDDAnalyzer
             true,
             new LocalizableResourceString(nameof(Resources.ValueObjectUsesEntityDescription), Resources.ResourceManager, typeof(Resources)));
 
-        private static readonly DiagnosticDescriptor ValueObjectMustBeImmutable = new DiagnosticDescriptor(DiagnosticId,
+        private static readonly DiagnosticDescriptor ValueObjectMustBeImmutable = new DiagnosticDescriptor(ValueObjectsMustBeImmutableId,
             new LocalizableResourceString(nameof(Resources.ValueObjectMustBeImmutableTitle), Resources.ResourceManager, typeof(Resources)),
             new LocalizableResourceString(nameof(Resources.ValueObjectMustBeImmutableMessageFormat), Resources.ResourceManager, typeof(Resources)),
             Category,
@@ -28,7 +31,7 @@ namespace DDDAnalyzer
             true,
             new LocalizableResourceString(nameof(Resources.ValueObjectMustBeImmutableDescription), Resources.ResourceManager, typeof(Resources)));
 
-        private static readonly DiagnosticDescriptor ValueObjectMustImplementIEquatable = new DiagnosticDescriptor(DiagnosticId,
+        private static readonly DiagnosticDescriptor ValueObjectMustImplementIEquatable = new DiagnosticDescriptor(ValueObjectsMustImplementIEquatableId,
             new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableTitle), Resources.ResourceManager, typeof(Resources)),
             new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableMessageFormat), Resources.ResourceManager, typeof(Resources)),
             Category,
@@ -36,7 +39,7 @@ namespace DDDAnalyzer
             true,
             new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableDescription), Resources.ResourceManager, typeof(Resources)));
 
-        private static readonly DiagnosticDescriptor ValueObjectMustBeSealed = new DiagnosticDescriptor(DiagnosticId,
+        private static readonly DiagnosticDescriptor ValueObjectMustBeSealed = new DiagnosticDescriptor(ValueObjectsMustBeSealedId,
             new LocalizableResourceString(nameof(Resources.ValueObjectMustBeSealedTitle), Resources.ResourceManager, typeof(Resources)),
             new LocalizableResourceString(nameof(Resources.ValueObjectMustBeSealedMessageFormat), Resources.ResourceManager, typeof(Resources)),
             Category,
@@ -99,15 +102,6 @@ namespace DDDAnalyzer
             {
                 CheckThatParametersAreNotEntities(context, method);
                 CheckThatReturnTypeIsNotEntity(context, method);
-                CheckForPrivateConstructor(method, context.);
-            }
-        }
-
-        private static void CheckForPrivateConstructor(IMethodSymbol method)
-        {
-            if (method.MethodKind == MethodKind.Constructor)
-            {
-                if(method.)
             }
         }
 

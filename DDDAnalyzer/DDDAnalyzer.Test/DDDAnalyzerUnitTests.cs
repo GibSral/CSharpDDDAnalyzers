@@ -23,7 +23,7 @@ namespace DDDAnalyzer.Test
 
         protected override CodeFixProvider GetCSharpCodeFixProvider()
         {
-            return new DDDAnalyzerCodeFixProvider();
+            return new ValueObjectMustBeSealedCodeFixProvider();
         }
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()

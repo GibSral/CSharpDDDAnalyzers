@@ -15,42 +15,38 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace DDDAnalyzer
 {
-    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(DDDAnalyzerCodeFixProvider)), Shared]
-    public class DDDAnalyzerCodeFixProvider : CodeFixProvider
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ValueObjectMustBeSealedCodeFixProvider)), Shared]
+    public class ValueObjectMustBeSealedCodeFixProvider : CodeFixProvider
     {
-        private const string title = "Make uppercase";
+        private string title;
+        public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(ValueObjectAnalyzer.ValueObjectsMustBeSealedId);
 
-        public sealed override ImmutableArray<string> FixableDiagnosticIds
-        {
-            get { return ImmutableArray.Create(ValueObjectAnalyzer.DiagnosticId); }
-        }
-
-        public sealed override FixAllProvider GetFixAllProvider()
-        {
-            // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/FixAllProvider.md for more information on Fix All Providers
-            return WellKnownFixAllProviders.BatchFixer;
-        }
+        public sealed override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
         public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
-            var diagnostic = context.Diagnostics.First();
+            var diagnostic = context.Diagnostics.First(it => it.Id.Equals(ValueObjectAnalyzer.ValueObjectsMustBeSealedId));
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
             var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
 
             // Register a code action that will invoke the fix.
+            title = "Make value object sealed";
             context.RegisterCodeFix(
                 CodeAction.Create(
                     title: title,
-                    createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
+                    createChangedSolution: it => MakeUppercaseAsync(context.Document, declaration, it),
                     equivalenceKey: title),
                 diagnostic);
         }
 
+        //private Task<Solution> MakeClassSealed(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        //{
+        //}
+        
         private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
         {
             // Compute new uppercase name.
