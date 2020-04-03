@@ -22,7 +22,7 @@ namespace DDDAnalyzer
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(DDDAnalyzerAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.Create(ValueObjectAnalyzer.DiagnosticId); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()

@@ -1,20 +1,20 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using TestHelper;
 using DDDAnalyzer;
+using NUnit.Framework;
 
 namespace DDDAnalyzer.Test
 {
-    [TestClass]
+    [TestFixture]
     public class UnitTest : CodeFixVerifier
     {
 
         //No diagnostics expected to show up
-        [TestMethod]
-        public void TestMethod1()
+        [Test]
+        public void Test1()
         {
             var test = @"";
 
@@ -22,8 +22,8 @@ namespace DDDAnalyzer.Test
         }
 
         //Diagnostic and CodeFix both triggered and checked for
-        [TestMethod]
-        public void TestMethod2()
+        [Test]
+        public void Test2()
         {
             var test = @"
     using System;
@@ -76,7 +76,7 @@ namespace DDDAnalyzer.Test
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {
-            return new DDDAnalyzerAnalyzer();
+            return new ValueObjectAnalyzer();
         }
     }
 }
