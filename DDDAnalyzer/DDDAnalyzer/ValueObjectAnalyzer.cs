@@ -53,15 +53,6 @@ namespace DDDAnalyzer
             {
                 CheckThatParametersAreNotEntities(context, method);
                 CheckThatReturnTypeIsNotEntity(context, method);
-                CheckThatMethodIsNotVoid(context, method);
-            }
-        }
-
-        private static void CheckThatMethodIsNotVoid(SymbolAnalysisContext context, IMethodSymbol method)
-        {
-            if (method.ReturnsVoid)
-            {
-                EmitImmutabilityViolation(context, method);
             }
         }
 
