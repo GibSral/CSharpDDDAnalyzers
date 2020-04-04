@@ -1,24 +1,22 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
-using Microsoft.CodeAnalysis.Text;
 
-namespace DDDAnalyzer
+namespace DDDAnalyzer.ValueObjectCodeFixProvider
 {
-    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ValueObjectMustBeSealedCodeFixProvider)), Shared]
-    public class ValueObjectMustBeSealedCodeFixProvider : CodeFixProvider
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ValueObjectMustBeSealedCodeFixProvider))]
+    [Shared]
+    public class ValueObjectMustBeSealedCodeFixProvider : Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider
     {
-        private string title;
+        private const string Title = "Make value object sealed";
         public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(ValueObjectAnalyzer.ValueObjectsMustBeSealedId);
 
         public sealed override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
@@ -29,21 +27,21 @@ namespace DDDAnalyzer
 
             var diagnostic = context.Diagnostics.First(it => it.Id.Equals(ValueObjectAnalyzer.ValueObjectsMustBeSealedId));
             var diagnosticSpan = diagnostic.Location.SourceSpan;
-
-            // Find the type declaration identified by the diagnostic.
             var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
 
-            // Register a code action that will invoke the fix.
-            title = "Make value object sealed";
-            context.RegisterCodeFix(
-                CodeAction.Create(
-                    title: title,
-                    it => MakeClassSealed(context.Document, declaration, it),
-                    equivalenceKey: title),
-                diagnostic);
+
+            var makeClassSealed = CodeAction.Create(Title, it => MakeClassSealed(context.Document, declaration, it), Title);
+            context.RegisterCodeFix(makeClassSealed, diagnostic);
+            var implementedIEquatable = CodeAction.Create(Title, it => ImplementIEquatable(context.Document, declaration, it), Title);
+            context.RegisterCodeFix(implementedIEquatable, diagnostic);
         }
 
-        private async Task<Document> MakeClassSealed(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private Task<Document> ImplementIEquatable(Document contextDocument, TypeDeclarationSyntax declaration, CancellationToken it)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static async Task<Document> MakeClassSealed(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
         {
             var newModifiers = typeDecl.AddModifiers(SyntaxFactory.Token(SyntaxKind.SealedKeyword));
             var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken);

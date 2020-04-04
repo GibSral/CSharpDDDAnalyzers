@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using System;
 using TestHelper;
 using DDDAnalyzer;
+using DDDAnalyzer.ValueObjectCodeFixProvider;
 using NUnit.Framework;
 
 namespace DDDAnalyzer.Test
@@ -21,7 +22,7 @@ namespace DDDAnalyzer.Test
             VerifyCSharpDiagnostic(test);
         }
 
-        protected override CodeFixProvider GetCSharpCodeFixProvider()
+        protected override Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider GetCSharpCodeFixProvider()
         {
             return new ValueObjectMustBeSealedCodeFixProvider();
         }
