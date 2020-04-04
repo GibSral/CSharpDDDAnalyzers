@@ -64,21 +64,31 @@ namespace DDDAnalyzer
             var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
             if (IsValueObject(namedTypeSymbol))
             {
-                if (!namedTypeSymbol.IsSealed)
-                {
-                    EmitSealedViolation(context, namedTypeSymbol);
-                }
+                EnsureValueObjectIsSealed(context, namedTypeSymbol);
+                EnsureValueObjectImplementsIEquatable(context, namedTypeSymbol);
+            }
+        }
 
-                var implementsIEquatable = namedTypeSymbol.AllInterfaces.Any(it =>
-                {
-                    var implements = it.Name.Equals("IEquatable");
-                    implements &= it.TypeArguments.Any(tp => tp.Name.Equals(namedTypeSymbol.Name) && tp.ContainingNamespace.Equals(namedTypeSymbol.ContainingNamespace));
-                    return implements;
-                });
-                if (!implementsIEquatable)
-                {
-                    EmitIEquatableViolation(context, namedTypeSymbol);
-                }
+        private static void EnsureValueObjectIsSealed(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol)
+        {
+            if (!namedTypeSymbol.IsSealed)
+            {
+                EmitSealedViolation(context, namedTypeSymbol);
+            }
+        }
+
+        private static void EnsureValueObjectImplementsIEquatable(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol)
+        {
+            var implementsIEquatable = namedTypeSymbol.AllInterfaces.Any(it =>
+            {
+                var implements = it.Name.Equals("IEquatable");
+                implements &= it.TypeArguments.Any(tp => tp.Name.Equals(namedTypeSymbol.Name) && tp.ContainingNamespace.Equals(namedTypeSymbol.ContainingNamespace));
+                return implements;
+            });
+
+            if (!implementsIEquatable)
+            {
+                EmitIEquatableViolation(context, namedTypeSymbol);
             }
         }
 
@@ -87,10 +97,15 @@ namespace DDDAnalyzer
             var fieldSymbol = (IFieldSymbol)context.Symbol;
             if (IsValueObject(fieldSymbol.ContainingType))
             {
-                if (!fieldSymbol.IsReadOnly)
-                {
-                    EmitImmutabilityViolation(context, fieldSymbol);
-                }
+                EnsureFieldIsReadonly(context, fieldSymbol);
+            }
+        }
+
+        private static void EnsureFieldIsReadonly(SymbolAnalysisContext context, IFieldSymbol fieldSymbol)
+        {
+            if (!fieldSymbol.IsReadOnly)
+            {
+                EmitImmutabilityViolation(context, fieldSymbol);
             }
         }
 
@@ -100,12 +115,12 @@ namespace DDDAnalyzer
             var type = method.ContainingType;
             if (IsValueObject(type))
             {
-                CheckThatParametersAreNotEntities(context, method);
-                CheckThatReturnTypeIsNotEntity(context, method);
+                EnsureThatEntitiesAreNotUsedAsParameters(context, method);
+                EnsureThatEntityIsNotUsedAsReturnValue(context, method);
             }
         }
 
-        private static void CheckThatReturnTypeIsNotEntity(SymbolAnalysisContext context, IMethodSymbol method)
+        private static void EnsureThatEntityIsNotUsedAsReturnValue(SymbolAnalysisContext context, IMethodSymbol method)
         {
             if (!method.ReturnsVoid)
             {
@@ -116,7 +131,7 @@ namespace DDDAnalyzer
             }
         }
 
-        private static void CheckThatParametersAreNotEntities(SymbolAnalysisContext context, IMethodSymbol method)
+        private static void EnsureThatEntitiesAreNotUsedAsParameters(SymbolAnalysisContext context, IMethodSymbol method)
         {
             foreach (var parameter in method.Parameters)
             {
@@ -134,15 +149,24 @@ namespace DDDAnalyzer
             var classType = propertySymbol.ContainingType;
             if (IsValueObject(classType))
             {
-                if (!propertySymbol.IsReadOnly)
-                {
-                    EmitImmutabilityViolation(context, propertySymbol);
-                }
+                EnsureThatPropertyIsReadonly(context, propertySymbol);
+                EnsureThatPropertyIsNotOfAnEntityType(context, propertySymbol);
+            }
+        }
 
-                if (IsEntity(propertySymbol.Type))
-                {
-                    EmitEntityViolation(context, propertySymbol);
-                }
+        private static void EnsureThatPropertyIsNotOfAnEntityType(SymbolAnalysisContext context, IPropertySymbol propertySymbol)
+        {
+            if (IsEntity(propertySymbol.Type))
+            {
+                EmitEntityViolation(context, propertySymbol);
+            }
+        }
+
+        private static void EnsureThatPropertyIsReadonly(SymbolAnalysisContext context, IPropertySymbol propertySymbol)
+        {
+            if (!propertySymbol.IsReadOnly)
+            {
+                EmitImmutabilityViolation(context, propertySymbol);
             }
         }
 
