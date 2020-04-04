@@ -3,6 +3,9 @@ using System.Linq;
 using DDDAnalyzer.Attributes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using static DDDAnalyzer.ValueObjectAnalyzers.PropertyAnalyzer;
+using static DDDAnalyzer.ValueObjectAnalyzers.MethodAnalyzer;
+using static DDDAnalyzer.ValueObjectAnalyzers.FieldAnalyzer;
 
 namespace DDDAnalyzer.ValueObjectAnalyzers
 {
@@ -34,93 +37,13 @@ namespace DDDAnalyzer.ValueObjectAnalyzers
 
         public override void Initialize(AnalysisContext context)
         {
-            context.RegisterSymbolAction(AnalyzeMethod, SymbolKind.Method);
-            context.RegisterSymbolAction(AnalyzeProperty, SymbolKind.Property);
-            context.RegisterSymbolAction(AnalyzeField, SymbolKind.Field);
-        }
-
-        private static void AnalyzeField(SymbolAnalysisContext context)
-        {
-            var fieldSymbol = (IFieldSymbol)context.Symbol;
-            if (fieldSymbol.ContainingType.IsValueObject())
-            {
-                EnsureFieldIsReadonly(context, fieldSymbol);
-            }
-        }
-
-        private static void EnsureFieldIsReadonly(SymbolAnalysisContext context, IFieldSymbol fieldSymbol)
-        {
-            if (!fieldSymbol.IsReadOnly)
-            {
-                EmitImmutabilityViolation(context, fieldSymbol);
-            }
-        }
-
-        private static void AnalyzeMethod(SymbolAnalysisContext context)
-        {
-            var method = (IMethodSymbol)context.Symbol;
-            var type = method.ContainingType;
-            if (type.IsValueObject())
-            {
-                EnsureThatEntitiesAreNotUsedAsParameters(context, method);
-                EnsureThatEntityIsNotUsedAsReturnValue(context, method);
-            }
-        }
-
-        private static void EnsureThatEntityIsNotUsedAsReturnValue(SymbolAnalysisContext context, IMethodSymbol method)
-        {
-            if (!method.ReturnsVoid)
-            {
-                if (IsEntity(method.ReturnType))
-                {
-                    EmitEntityViolation(context, method);
-                }
-            }
-        }
-
-        private static void EnsureThatEntitiesAreNotUsedAsParameters(SymbolAnalysisContext context, IMethodSymbol method)
-        {
-            foreach (var parameter in method.Parameters)
-            {
-                var parameterType = parameter.Type;
-                if (IsEntity(parameterType))
-                {
-                    EmitEntityViolation(context, parameter);
-                }
-            }
-        }
-
-        private static void AnalyzeProperty(SymbolAnalysisContext context)
-        {
-            var propertySymbol = (IPropertySymbol)context.Symbol;
-            var classType = propertySymbol.ContainingType;
-            if (classType.IsValueObject())
-            {
-                EnsureThatPropertyIsReadonly(context, propertySymbol);
-                EnsureThatPropertyIsNotOfAnEntityType(context, propertySymbol);
-            }
-        }
-
-        private static void EnsureThatPropertyIsNotOfAnEntityType(SymbolAnalysisContext context, IPropertySymbol propertySymbol)
-        {
-            if (IsEntity(propertySymbol.Type))
-            {
-                EmitEntityViolation(context, propertySymbol);
-            }
-        }
-
-        private static void EnsureThatPropertyIsReadonly(SymbolAnalysisContext context, IPropertySymbol propertySymbol)
-        {
-            if (!propertySymbol.IsReadOnly)
-            {
-                EmitImmutabilityViolation(context, propertySymbol);
-            }
-        }
-
-        private static bool IsEntity(ISymbol symbol)
-        {
-            var attributes = symbol.GetAttributes().ToArray();
-            return attributes.Any(it => it.AttributeClass.Name.Equals(nameof(EntityAttribute)));
+            context.RegisterSymbolAction(analysisContext => AnalyzeMethod(analysisContext, symbol => EmitEntityViolation(analysisContext, symbol)), SymbolKind.Method);
+            context.RegisterSymbolAction(
+                analysisContext => AnalyzerProperty(analysisContext,
+                    symbol => EmitEntityViolation(analysisContext, symbol),
+                    symbol => EmitImmutabilityViolation(analysisContext, symbol)),
+                SymbolKind.Property);
+            context.RegisterSymbolAction(analysisContext => AnalyzeField(analysisContext, symbol => EmitImmutabilityViolation(analysisContext, symbol)), SymbolKind.Field);
         }
 
         private static void EmitImmutabilityViolation(SymbolAnalysisContext context, ISymbol symbol) => EmitViolation(context, symbol, ValueObjectMustBeImmutable);

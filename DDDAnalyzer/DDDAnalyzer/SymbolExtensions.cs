@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 
 namespace DDDAnalyzer
 {
-    public static class NamedTypeSymbolExtensions
+    public static class SymbolExtensions
     {
         public static bool IsValueObject(this INamedTypeSymbol type)
         {
@@ -18,5 +18,10 @@ namespace DDDAnalyzer
             return isValueObject;
         }
 
+        public static bool IsEntity(this ITypeSymbol type)
+        {
+            var attributes = type.GetAttributes().ToArray();
+            return attributes.Any(it => it.AttributeClass.Name.Equals(nameof(EntityAttribute)));
+        }
     }
 }
