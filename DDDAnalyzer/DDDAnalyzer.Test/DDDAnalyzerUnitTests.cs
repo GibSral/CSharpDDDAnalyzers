@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using System;
 using TestHelper;
 using DDDAnalyzer;
+using DDDAnalyzer.ValueObjectAnalyzers;
 using DDDAnalyzer.ValueObjectCodeFixProvider;
 using NUnit.Framework;
 

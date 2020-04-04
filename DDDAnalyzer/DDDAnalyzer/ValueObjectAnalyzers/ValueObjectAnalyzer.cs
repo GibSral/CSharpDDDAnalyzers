@@ -4,15 +4,13 @@ using DDDAnalyzer.Attributes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace DDDAnalyzer
+namespace DDDAnalyzer.ValueObjectAnalyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class ValueObjectAnalyzer : DiagnosticAnalyzer
     {
         public const string NoEntitiesInValueObjectsId = nameof(NoEntitiesInValueObjectsId);
         public const string ValueObjectsMustBeImmutableId = nameof(ValueObjectsMustBeImmutableId);
-        public const string ValueObjectsMustImplementIEquatableId = nameof(ValueObjectsMustImplementIEquatableId);
-        public const string ValueObjectsMustBeSealedId = nameof(ValueObjectsMustBeSealedId);
         private const string Category = "Design";
 
         private static readonly DiagnosticDescriptor ValueObjectMustNotUseEntityRule = new DiagnosticDescriptor(NoEntitiesInValueObjectsId,
@@ -31,71 +29,20 @@ namespace DDDAnalyzer
             true,
             new LocalizableResourceString(nameof(Resources.ValueObjectMustBeImmutableDescription), Resources.ResourceManager, typeof(Resources)));
 
-        private static readonly DiagnosticDescriptor ValueObjectMustImplementIEquatable = new DiagnosticDescriptor(ValueObjectsMustImplementIEquatableId,
-            new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableTitle), Resources.ResourceManager, typeof(Resources)),
-            new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableMessageFormat), Resources.ResourceManager, typeof(Resources)),
-            Category,
-            DiagnosticSeverity.Error,
-            true,
-            new LocalizableResourceString(nameof(Resources.ValueObjectMustImplementIEquatableDescription), Resources.ResourceManager, typeof(Resources)));
 
-        private static readonly DiagnosticDescriptor ValueObjectMustBeSealed = new DiagnosticDescriptor(ValueObjectsMustBeSealedId,
-            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeSealedTitle), Resources.ResourceManager, typeof(Resources)),
-            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeSealedMessageFormat), Resources.ResourceManager, typeof(Resources)),
-            Category,
-            DiagnosticSeverity.Error,
-            true,
-            new LocalizableResourceString(nameof(Resources.ValueObjectMustBeSealedDescription), Resources.ResourceManager, typeof(Resources)));
-
-
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-            ImmutableArray.Create(ValueObjectMustNotUseEntityRule, ValueObjectMustBeImmutable, ValueObjectMustImplementIEquatable, ValueObjectMustBeSealed);
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(ValueObjectMustNotUseEntityRule, ValueObjectMustBeImmutable);
 
         public override void Initialize(AnalysisContext context)
         {
-            context.RegisterSymbolAction(AnalyzeType, SymbolKind.NamedType);
             context.RegisterSymbolAction(AnalyzeMethod, SymbolKind.Method);
             context.RegisterSymbolAction(AnalyzeProperty, SymbolKind.Property);
             context.RegisterSymbolAction(AnalyzeField, SymbolKind.Field);
         }
 
-        private static void AnalyzeType(SymbolAnalysisContext context)
-        {
-            var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
-            if (IsValueObject(namedTypeSymbol))
-            {
-                EnsureValueObjectIsSealed(context, namedTypeSymbol);
-                EnsureValueObjectImplementsIEquatable(context, namedTypeSymbol);
-            }
-        }
-
-        private static void EnsureValueObjectIsSealed(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol)
-        {
-            if (!namedTypeSymbol.IsSealed)
-            {
-                EmitSealedViolation(context, namedTypeSymbol);
-            }
-        }
-
-        private static void EnsureValueObjectImplementsIEquatable(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol)
-        {
-            var implementsIEquatable = namedTypeSymbol.AllInterfaces.Any(it =>
-            {
-                var implements = it.Name.Equals("IEquatable");
-                implements &= it.TypeArguments.Any(tp => tp.Name.Equals(namedTypeSymbol.Name) && tp.ContainingNamespace.Equals(namedTypeSymbol.ContainingNamespace));
-                return implements;
-            });
-
-            if (!implementsIEquatable)
-            {
-                EmitIEquatableViolation(context, namedTypeSymbol);
-            }
-        }
-
         private static void AnalyzeField(SymbolAnalysisContext context)
         {
             var fieldSymbol = (IFieldSymbol)context.Symbol;
-            if (IsValueObject(fieldSymbol.ContainingType))
+            if (fieldSymbol.ContainingType.IsValueObject())
             {
                 EnsureFieldIsReadonly(context, fieldSymbol);
             }
@@ -113,7 +60,7 @@ namespace DDDAnalyzer
         {
             var method = (IMethodSymbol)context.Symbol;
             var type = method.ContainingType;
-            if (IsValueObject(type))
+            if (type.IsValueObject())
             {
                 EnsureThatEntitiesAreNotUsedAsParameters(context, method);
                 EnsureThatEntityIsNotUsedAsReturnValue(context, method);
@@ -147,7 +94,7 @@ namespace DDDAnalyzer
         {
             var propertySymbol = (IPropertySymbol)context.Symbol;
             var classType = propertySymbol.ContainingType;
-            if (IsValueObject(classType))
+            if (classType.IsValueObject())
             {
                 EnsureThatPropertyIsReadonly(context, propertySymbol);
                 EnsureThatPropertyIsNotOfAnEntityType(context, propertySymbol);
@@ -175,23 +122,6 @@ namespace DDDAnalyzer
             var attributes = symbol.GetAttributes().ToArray();
             return attributes.Any(it => it.AttributeClass.Name.Equals(nameof(EntityAttribute)));
         }
-
-        private static bool IsValueObject(INamedTypeSymbol type)
-        {
-            var attributes = type.GetAttributes();
-            return attributes.Any(IsValueObject);
-        }
-
-        private static bool IsValueObject(AttributeData attribute)
-        {
-            var isValueObject = attribute.AttributeClass.Name.Equals(nameof(ValueObjectAttribute));
-            return isValueObject;
-        }
-
-        private static void EmitIEquatableViolation(SymbolAnalysisContext context, INamedTypeSymbol symbol) =>
-            EmitViolation(context, symbol, ValueObjectMustImplementIEquatable, symbol.Name);
-
-        private static void EmitSealedViolation(SymbolAnalysisContext context, INamedTypeSymbol symbol) => EmitViolation(context, symbol, ValueObjectMustBeSealed);
 
         private static void EmitImmutabilityViolation(SymbolAnalysisContext context, ISymbol symbol) => EmitViolation(context, symbol, ValueObjectMustBeImmutable);
 

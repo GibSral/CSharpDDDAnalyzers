@@ -4,6 +4,7 @@ using System.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DDDAnalyzer.ValueObjectAnalyzers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -17,7 +18,7 @@ namespace DDDAnalyzer.ValueObjectCodeFixProvider
     public class ValueObjectMustBeSealedCodeFixProvider : Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider
     {
         private const string Title = "Make value object sealed";
-        public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(ValueObjectAnalyzer.ValueObjectsMustBeSealedId);
+        public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(ClassTypeAnalyzer.ValueObjectsMustBeSealedId);
 
         public sealed override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
@@ -25,7 +26,7 @@ namespace DDDAnalyzer.ValueObjectCodeFixProvider
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-            var diagnostic = context.Diagnostics.First(it => it.Id.Equals(ValueObjectAnalyzer.ValueObjectsMustBeSealedId));
+            var diagnostic = context.Diagnostics.First(it => it.Id.Equals(ClassTypeAnalyzer.ValueObjectsMustBeSealedId));
             var diagnosticSpan = diagnostic.Location.SourceSpan;
             var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
 
